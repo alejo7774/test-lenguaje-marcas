@@ -4,62 +4,83 @@ let shuffledQuestions = shuffleQuestions();
 let userAnswers = [];
 
 function renderPage(page) {
-    const container = document.getElementById("quiz-container");
-    container.innerHTML = "";
-    const start = page * questionsPerPage;
-    const end = Math.min(start + questionsPerPage, shuffledQuestions.length);
-  
-    for (let i = start; i < end; i++) {
-      const q = shuffledQuestions[i];
-      const div = document.createElement("div");
-      div.className = "question";
-  
-      const questionText = document.createElement("p");
-      questionText.textContent = `${i + 1}. ${q.question}`;
-      div.appendChild(questionText);
-  
-      const optionsList = document.createElement("ul");
-      optionsList.className = "option-list";
-  
-      if (q.type === "single" || q.type === "multiple") {
-        q.options.forEach((opt, idx) => {
-          const li = document.createElement("li");
-          const label = document.createElement("label");
-          const input = document.createElement("input");
-  
-          input.type = q.type === "single" ? "radio" : "checkbox";
-          input.name = `q${i}`;
-          input.value = idx;
-  
-          label.appendChild(input);
-          label.appendChild(document.createTextNode(opt));
-          li.appendChild(label);
-          optionsList.appendChild(li);
-        });
-        div.appendChild(optionsList);
-      } else if (q.type === "text") {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = `q${i}`;
-        div.appendChild(input);
-      }
-  
-      const button = document.createElement("button");
-      button.textContent = "Validar";
-      button.onclick = () => validateAnswer(i);
-      div.appendChild(button);
-  
-      const feedback = document.createElement("div");
-      feedback.id = `feedback${i}`;
-      div.appendChild(feedback);
-  
-      container.appendChild(div);
+  const container = document.getElementById("quiz-container");
+  container.innerHTML = "";
+  const start = page * questionsPerPage;
+  const end = Math.min(start + questionsPerPage, shuffledQuestions.length);
+
+  for (let i = start; i < end; i++) {
+    const q = shuffledQuestions[i];
+    const div = document.createElement("div");
+    div.className = "question";
+
+    const questionText = document.createElement("p");
+    questionText.textContent = `${i + 1}. ${q.question}`;
+    div.appendChild(questionText);
+
+    // Tipo de pregunta
+    const typeInfo = document.createElement("small");
+    typeInfo.style.display = "block";
+    typeInfo.style.fontStyle = "italic";
+    typeInfo.style.color = "#555";
+    if (q.type === "single") {
+      typeInfo.textContent = "Tipo: Selección única";
+    } else if (q.type === "multiple") {
+      typeInfo.textContent = "Tipo: Selección múltiple";
+    } else if (q.type === "text") {
+      typeInfo.textContent = "Tipo: Respuesta escrita";
     }
-  
-    document.getElementById("prev-button").disabled = page === 0;
-    document.getElementById("next-button").disabled = end >= shuffledQuestions.length;
+    div.appendChild(typeInfo);
+
+    const optionsList = document.createElement("ul");
+    optionsList.className = "option-list";
+
+    if (q.type === "single" || q.type === "multiple") {
+      q.options.forEach((opt, idx) => {
+        const li = document.createElement("li");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+
+        input.type = q.type === "single" ? "radio" : "checkbox";
+        input.name = `q${i}`;
+        input.value = idx;
+
+        // Restaurar selección previa
+        if (userAnswers[i] !== undefined) {
+          if (q.type === "single" && userAnswers[i] === idx) input.checked = true;
+          if (q.type === "multiple" && Array.isArray(userAnswers[i]) && userAnswers[i].includes(idx)) input.checked = true;
+        }
+
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(opt));
+        li.appendChild(label);
+        optionsList.appendChild(li);
+      });
+      div.appendChild(optionsList);
+    } else if (q.type === "text") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = `q${i}`;
+      if (userAnswers[i] !== undefined) input.value = userAnswers[i];
+      div.appendChild(input);
+    }
+
+    const button = document.createElement("button");
+    button.textContent = "Validar";
+    button.onclick = () => validateAnswer(i);
+    div.appendChild(button);
+
+    const feedback = document.createElement("div");
+    feedback.id = `feedback${i}`;
+    if (userAnswers[i] !== undefined) validateAnswer(i); // Mostrar validación si ya respondió
+    div.appendChild(feedback);
+
+    container.appendChild(div);
   }
 
+  document.getElementById("prev-button").disabled = page === 0;
+  document.getElementById("next-button").disabled = end >= shuffledQuestions.length;
+}
 function validateAnswer(index) {
   const q = shuffledQuestions[index];
   let userInput;
