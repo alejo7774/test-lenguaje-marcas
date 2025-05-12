@@ -81,6 +81,7 @@ function renderPage(page) {
   document.getElementById("prev-button").disabled = page === 0;
   document.getElementById("next-button").disabled = end >= shuffledQuestions.length;
 }
+
 function validateAnswer(index) {
   const q = shuffledQuestions[index];
   let userInput;
